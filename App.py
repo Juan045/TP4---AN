@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import GraphicPy as gpy
 import numpy as np
 from scipy import interpolate
+import AdnPy as adnpy
 
 def p(COEFICIENTES,x): 
     N = COEFICIENTES.size
@@ -118,6 +119,23 @@ def main():
         inciso_1e()
     
     # ejecutar inciso 2.a
+    poblacion = adnpy.main(polinomioA)
+    
+    material = [(sum(polinomioA(i)), i) for i in poblacion]
+    material = sorted(material,key=lambda x: x[0])
+    print("lista de materiales")
+    print(material)
+    print("menor material")
+    print(material[0])
+    print("posiciones de menor material")
+    print(material[0][1])
+    
+    abscisas = np.linspace(DATOS_X[0],DATOS_X[DATOS_X.size - 1], num=500)
+    ordenadas = polinomioA(abscisas) 
+    
+    gpy.graficarInterpolacion(material[0][1],polinomioA(material[0][1]), abscisas, ordenadas)
+    plt.show()
+    
 
 if __name__ == "__main__":
     main()

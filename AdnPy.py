@@ -5,56 +5,32 @@ polinomioG = None
 distancia_min = 10
 distancia_max = 20
 
-'''
-    CORREGIR PROBLEMAS:
-        - crear_poste genera postes fuera del rango (mal)
-        - a veces aparece una cantidad de material negativo (no investigado)
-'''
-
-
-def crear_poste(individuo, indice):
-    '''
-        si es el primer poste 10 <= x[i+1] - x[i] <= 20
-        si es el ultimo poste 10 <= x[i] - x[i-1] <= 20
-        caso contrario se hacen ambas comparaciones
-    '''
-    nuevo = 0
-    if(indice == 0):
-        nuevo += np.random.uniform(0, individuo[indice+1]-distancia_min)
-            
-    elif(indice == 19):
-        nuevo += individuo[indice-1] + np.random.uniform(distancia_min, distancia_max)
-    else:
-        nuevo += individuo[indice-1] + np.random.uniform(distancia_min, individuo[indice+1]-distancia_min)
-
-    return nuevo
-
 def crear_individuo():
     
     maximo = 300
     
     lista = np.zeros(20)
-    posicion_x = np.random.uniform(0, distancia_max)
+    generador_aleatorio = np.random.default_rng()
+    posicion_x = generador_aleatorio.uniform(0, distancia_max)
     lista[0] = posicion_x
 
     for i in range(1,20):
-        posicion_x = posicion_x + np.random.uniform(distancia_min, distancia_max)
+        posicion_x = posicion_x + generador_aleatorio.uniform(distancia_min, distancia_max)
         lista[i] = posicion_x
-    
-    
+
     return lista
 
 def crear_poblacion(tam):
-    
+
     poblacion = []
     for i in range(tam):
         
         individuo = crear_individuo()
-        
         while individuo[19] > 300:
             individuo = crear_individuo()
-            
+
         poblacion.append(individuo)
+
     return poblacion
     
 # evaluar que tan apto es un individuo para la resolucion del problema
@@ -63,73 +39,82 @@ def evaluar(individuo):
     score = sum(y)
     return score
 
-# se seleccionan los individuos que mejor se adaptan al problema
+
+def verificar_limites(hijo):
+    for i in range(1, len(hijo) - 1):
+        if hijo[i] - hijo[i-1] < 10:
+            hijo[i] = hijo[i-1] + 10
+        elif hijo[i] - hijo[i-1] > 20:
+            hijo[i] = hijo[i-1] + 20
+        
+        if hijo[i] + 10 > hijo[i + 1]:
+            hijo[i + 1] = hijo[i] + 10
+        elif hijo[i] + 20 < hijo[i + 1]:
+            hijo[i + 1] = hijo[i] + 20
+    return hijo
+
+def cruce(parent1, parent2):
+    point = np.random.randint(1, len(parent1) - 1)
+    hijo = np.concatenate((parent1[:point], parent2[point:]))
+    return verificar_limites(hijo)
+
+
 def seleccionar_aptos(poblacion):
-    
     puntuacion = [(evaluar(i), i) for i in poblacion]
     puntuacion = [i[1] for i in sorted(puntuacion)]
-    
+
     aptos = puntuacion[len(puntuacion) - seleccionar:]
     return aptos
-    
-# reproduce los individuos para generar hijos aptos
-def reproduccion(poblacion, aptos):
-    indice = 0
-    padre = []
-    # MIRAR ACA PORQUE PUEDE ROMPER LA RESTRICCION ENTRE 10 Y 20
-    for i in range(len(poblacion)):
-        indice = np.random.randint(1, 19)    
-        padre = random.sample(aptos, 2)
-        
-        poblacion[i][:indice] = padre[0][:indice]
-        poblacion[i][indice:] = padre[1][indice:]
-    
-    return poblacion
 
-# recibe una poblacion ya reproducida para mutarla si ocurriese
-def mutacion(poblacion):
-    for i in range(len(poblacion)):
-        if random.random() <= probabilidadMutacion:
-            indice = np.random.randint(1, 19)
-            nuevoPoste = crear_poste(poblacion[i], indice)
-            print(f"<<--El nuevo poste es: {nuevoPoste}-->>")
-            poblacion[i][indice] = nuevoPoste
-    return poblacion
+
+def mutacion(individual, mutation_rate=0.1):
+    for i in range(len(individual)):
+        if np.random.rand() < mutation_rate:
+            individual[i] = np.random.randint(10, 21)
+    return verificar_limites(individual)
+
+def reproducir(poblacion):
+    nueva_poblacion = []
+    aptos = seleccionar_aptos(poblacion)
+    for _ in range(individuos // 2):
+        padre1, padre2 = random.sample(aptos, 2)
+        hijo = cruce(padre1, padre2)
+        hijo = mutacion(hijo, probabilidadMutacion)
+        nueva_poblacion.append(hijo)
+    return nueva_poblacion
+
 
 def run():
     global poblacion
     poblacion = crear_poblacion(individuos)
-    
+    poblacion_mat = [(sum(polinomioG(i)), i) for i in poblacion]
+    poblacion_mat = sorted(poblacion_mat,key=lambda x: x[0])
     for i in range(generaciones):
-        """ print('___________')
-        print('Generacion: ', i)
-        print('Poblacion', poblacion)
-        print() """
-    aptos = seleccionar_aptos(poblacion)
-    poblacion = reproduccion(poblacion, aptos)
-    poblacion = mutacion(poblacion)
+        poblacion_temp = reproducir(poblacion) 
+        poblacion_temp_mat = [(sum(polinomioG(i)), i) for i in poblacion_temp]
+        poblacion_temp_mat = sorted(poblacion_temp_mat, key=lambda x: x[0])
+        if poblacion_temp_mat[0][0] < poblacion_mat[0][0]:
+            poblacion = poblacion_temp
+            poblacion_mat = poblacion_temp_mat 
+
 
 def main(polinomio):
     global generaciones
     generaciones = 100
     
     global probabilidadMutacion
-    probabilidadMutacion = 0.02
-    
+    probabilidadMutacion = 0.01
+
     global seleccionar
-    seleccionar = 10
+    seleccionar = 50
     
     global individuos
-    individuos = 50
+    individuos = 100
     
     global polinomioG
     polinomioG = polinomio
     
     run()
+
     return poblacion
     
-    
-    
-    
-
-        

@@ -120,13 +120,13 @@ def main():
     
     # ejecutar inciso 2.a
     poblacion = adnpy.main(polinomioA)
-    
+
     material = [(sum(polinomioA(i)), i) for i in poblacion]
     material = sorted(material,key=lambda x: x[0])
-    print("lista de materiales")
-    print(material)
+
+
     print("menor material")
-    print(material[0])
+    print(material[0][0])
     print("posiciones de menor material")
     print(material[0][1])
     

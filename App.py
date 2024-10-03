@@ -89,10 +89,69 @@ def inciso_1e():
 # ----------------------- #
 # ---| EJERCICIO 2.a |--- #
 # ----------------------- # 
+def y_spline(x, derivada=0):
+    return interpolate.splev(x, tck, der=derivada)
 
-### Armar funcion a minimizar
-### Generar vector X y vector Y
+def y_vandermonde(x, derivada=0):
+    if (derivada == 0):
+        return polinomioA(x)
+    else:
+        derivada_v = polinomioA.deriv(derivada)
+        return derivada_v(x)
+    
+# evaluar que tan apto es un individuo para la resolucion del problema
+def evaluar_score_material(individuo, metodo_seleccion):
+    y = metodo_seleccion(individuo)
+    score = sum(y)
+    return score    
 
+def evaluar_score_material_promedio_pesado(individuo, metodo_seleccion):
+    sum_w = 0
+    sum_numerador = 0
+    
+    for i in range(len(individuo)):
+        # calculo w
+        w = abs(metodo_seleccion(individuo[i],2))
+        temp = (metodo_seleccion(individuo[i],1)**2) + 1
+        w = w/(temp**(2/3))
+        #calculo y
+        y = metodo_seleccion(individuo[i], 0)
+        sum_numerador += y*w
+        sum_w += w
+        
+        
+    return sum_numerador/sum_w
+
+def mostrar_resultado_inciso2(poblacion, funcion):
+    material = [(sum(funcion(i)), i) for i in poblacion]
+    material = sorted(material,key=lambda x: x[0])
+
+
+    print("Menor material:")
+    print(material[0][0])
+    print("Posiciones de menor material:")
+    print(material[0][1])
+    
+    abscisas = np.linspace(DATOS_X[0],DATOS_X[DATOS_X.size - 1], num=500)
+    ordenadas = funcion(abscisas) 
+    
+    gpy.graficarInterpolacion(material[0][1],funcion(material[0][1]), abscisas, ordenadas)
+    plt.show()
+
+def inciso_2a():
+    poblacion = adnpy.main(polinomioA, y_vandermonde, evaluar_score_material)
+    mostrar_resultado_inciso2(poblacion, y_vandermonde)
+    
+# ----------------------- #
+# ---| EJERCICIO 2.b |--- #
+# ----------------------- # 
+def inciso_2b():
+    
+    # material para spline
+    
+    # material para vandermonde o newton
+    poblacion = adnpy.main(y_spline, y_vandermonde, evaluar_score_material_promedio_pesado)
+    mostrar_resultado_inciso2(poblacion, y_spline)
 
 # ----------------------- #
 # --------| FIN |-------- #
@@ -102,6 +161,9 @@ def main():
     respuesta = input(f"Ejecutar inciso 1.a (s/n): ").strip().lower()
     if respuesta == 's':
         inciso_1a()
+        print(y_vandermonde(50))
+        print(y_vandermonde(50,1))
+        print(y_vandermonde(50,2))
         
     # ejecutar inciso 1.b
     respuesta = input(f"Ejecutar inciso 1.b (s/n): ").strip().lower()
@@ -119,22 +181,14 @@ def main():
         inciso_1e()
     
     # ejecutar inciso 2.a
-    poblacion = adnpy.main(polinomioA)
-
-    material = [(sum(polinomioA(i)), i) for i in poblacion]
-    material = sorted(material,key=lambda x: x[0])
-
-
-    print("menor material")
-    print(material[0][0])
-    print("posiciones de menor material")
-    print(material[0][1])
+    respuesta = input(f"Ejecutar inciso 2.a (s/n): ").strip().lower()
+    if respuesta == 's':
+        inciso_2a()
     
-    abscisas = np.linspace(DATOS_X[0],DATOS_X[DATOS_X.size - 1], num=500)
-    ordenadas = polinomioA(abscisas) 
-    
-    gpy.graficarInterpolacion(material[0][1],polinomioA(material[0][1]), abscisas, ordenadas)
-    plt.show()
+    # ejecutar inciso 2.b
+    respuesta = input(f"Ejecutar inciso 2.b (s/n): ").strip().lower()
+    if respuesta == 's':
+        inciso_2b()
     
 
 if __name__ == "__main__":

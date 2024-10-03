@@ -1,9 +1,11 @@
 import numpy as np
 import random
 
+
 polinomioG = None
 distancia_min = 10
 distancia_max = 20
+
 
 def crear_individuo():
     
@@ -34,7 +36,7 @@ def crear_poblacion(tam):
     return poblacion
     
 # evaluar que tan apto es un individuo para la resolucion del problema
-def evaluar(individuo):
+def evaluar_a(individuo):
     y = polinomioG(individuo)
     score = sum(y)
     return score
@@ -60,8 +62,8 @@ def cruce(parent1, parent2):
 
 
 def seleccionar_aptos(poblacion):
-    puntuacion = [(evaluar(i), i) for i in poblacion]
-    puntuacion = [i[1] for i in sorted(puntuacion)]
+    puntuacion = [(evaluar(i, func), i) for i in poblacion]
+    puntuacion = [i[1] for i in sorted(puntuacion,key=lambda x: x[0])]
 
     aptos = puntuacion[len(puntuacion) - seleccionar:]
     return aptos
@@ -98,9 +100,15 @@ def run():
             poblacion_mat = poblacion_temp_mat 
 
 
-def main(polinomio):
+def main(polinomio, funcion, material=evaluar_a):
     global generaciones
     generaciones = 100
+    
+    global evaluar
+    evaluar = material
+    
+    global func
+    func = funcion
     
     global probabilidadMutacion
     probabilidadMutacion = 0.01
